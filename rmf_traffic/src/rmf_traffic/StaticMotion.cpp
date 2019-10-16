@@ -22,57 +22,89 @@
 namespace rmf_traffic {
 namespace internal {
 
+namespace {
 //==============================================================================
-StaticMotion::StaticMotion(const Eigen::Isometry2d& tf)
+fcl::Matrix3f get_rotation(const Eigen::Isometry2d& tf)
 {
-  const Eigen::Vector2d& p = tf.translation();
-  const auto x = fcl::Vec3f(p[0], p[1], 0.0);
-
-  Eigen::Rotation2Dd R{tf.rotation()};
+  const Eigen::Rotation2Dd R{tf.rotation()};
   fcl::Quaternion3f q;
   q.fromAxisAngle(fcl::Vec3f(0.0, 0.0, 1.0), R.angle());
 
-  _tf.setTransform(q, x);
+  fcl::Matrix3f rotation;
+  q.toRotation(rotation);
+
+  return rotation;
 }
 
 //==============================================================================
-bool StaticMotion::integrate(double /*dt*/) const
+fcl::Vec3f get_translation(const Eigen::Isometry2d& tf)
+{
+  const Eigen::Vector2d& p = tf.translation();
+  return fcl::Vec3f(p[0], p[1], 0.0);
+}
+} // anonymous namespace
+
+//==============================================================================
+StaticMotion::StaticMotion(const Eigen::Isometry2d& tf)
+  : fcl::TranslationMotion(
+      get_rotation(tf),
+      get_translation(tf),
+      get_translation(tf))
 {
   // Do nothing
-  return true;
 }
 
-//==============================================================================
-fcl::FCL_REAL StaticMotion::computeMotionBound(
-    const fcl::BVMotionBoundVisitor&) const
-{
-  // TODO(MXG): Investigate the legitimacy of this implementation. Make sure
-  // that this function truly should always return 0.
-  return 0;
-}
+////==============================================================================
+//StaticMotion::StaticMotion(const Eigen::Isometry2d& tf)
+//{
+//  const Eigen::Vector2d& p = tf.translation();
+//  const auto x = fcl::Vec3f(p[0], p[1], 0.0);
 
-//==============================================================================
-fcl::FCL_REAL StaticMotion::computeMotionBound(
-    const fcl::TriangleMotionBoundVisitor&) const
-{
-  std::cout << " ----- OH NO, WE'RE USING StaticMotion::computeMotionBound(TriangleMotionBoundVisitor)!! ----- "
-            << std::endl;
-  throw std::runtime_error("unimplemented function: StaticMotion::computeMotionBound(TriangleMotionBoundVisitor)");
-}
+//  const Eigen::Rotation2Dd R{tf.rotation()};
+//  fcl::Quaternion3f q;
+//  q.fromAxisAngle(fcl::Vec3f(0.0, 0.0, 1.0), R.angle());
 
-//==============================================================================
-void StaticMotion::getCurrentTransform(fcl::Transform3f& tf) const
-{
-  tf = _tf;
-}
+//  _tf.setTransform(q, x);
+//}
 
-//==============================================================================
-void StaticMotion::getTaylorModel(fcl::TMatrix3&, fcl::TVector3&) const
-{
-  std::cout << " ----- OH NO, WE'RE USING StaticMotion::getTaylorModel()!! ----- "
-            << std::endl;
-  throw std::runtime_error("unimplemented function: StaticMotion::getTaylorModel()");
-}
+////==============================================================================
+//bool StaticMotion::integrate(double /*dt*/) const
+//{
+//  // Do nothing
+//  return true;
+//}
+
+////==============================================================================
+//fcl::FCL_REAL StaticMotion::computeMotionBound(
+//    const fcl::BVMotionBoundVisitor&) const
+//{
+//  // TODO(MXG): Investigate the legitimacy of this implementation. Make sure
+//  // that this function truly should always return 0.
+//  return 0;
+//}
+
+////==============================================================================
+//fcl::FCL_REAL StaticMotion::computeMotionBound(
+//    const fcl::TriangleMotionBoundVisitor&) const
+//{
+//  std::cout << " ----- OH NO, WE'RE USING StaticMotion::computeMotionBound(TriangleMotionBoundVisitor)!! ----- "
+//            << std::endl;
+//  throw std::runtime_error("unimplemented function: StaticMotion::computeMotionBound(TriangleMotionBoundVisitor)");
+//}
+
+////==============================================================================
+//void StaticMotion::getCurrentTransform(fcl::Transform3f& tf) const
+//{
+//  tf = _tf;
+//}
+
+////==============================================================================
+//void StaticMotion::getTaylorModel(fcl::TMatrix3&, fcl::TVector3&) const
+//{
+//  std::cout << " ----- OH NO, WE'RE USING StaticMotion::getTaylorModel()!! ----- "
+//            << std::endl;
+//  throw std::runtime_error("unimplemented function: StaticMotion::getTaylorModel()");
+//}
 
 } // namespace internal
 } // namespace rmf_traffic

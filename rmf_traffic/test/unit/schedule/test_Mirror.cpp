@@ -287,7 +287,7 @@ GIVEN("Query patch with spacetime region overlapping with t1")
   //creating space to add to region
   const auto box = rmf_traffic::geometry::Box(10.0, 1.0);
   const auto final_box = rmf_traffic::geometry::make_final_convex(box);
-  //tf.translate(Eigen::Translation2f{10,0});
+  tf.translate(Eigen::Vector2d{0.0, 10.0});
   rmf_traffic::geometry::Space space(final_box,tf);
   std::vector<rmf_traffic::geometry::Space> spaces;
   spaces.push_back(space);
@@ -297,7 +297,9 @@ GIVEN("Query patch with spacetime region overlapping with t1")
 
   //querying for Patch using defined spacetime query
   rmf_traffic::schedule::Database::Patch changes= db.changes(query);
-  CHECK(changes.size()==1);
+  REQUIRE(changes.size() > 0);
+  CHECK(changes.size() == 1);
+  CHECK(changes.begin()->id() == 2);
 
   }
 
