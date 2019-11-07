@@ -1,5 +1,5 @@
 #include <pybind11/pybind11.h>
-
+#include <rmf_traffic/Trajectory.hpp>
 
 int add(int i, int j) {
     return i + j;
