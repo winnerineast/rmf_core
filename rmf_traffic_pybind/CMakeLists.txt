@@ -4,8 +4,6 @@ project(rmf_traffic_pybind)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
-find_package(ament_cmake REQUIRED)
-
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
@@ -19,9 +17,6 @@ add_subdirectory(external/pybind11)
 
 find_package(ament_cmake REQUIRED)
 find_package(rmf_traffic REQUIRED)
-
-# TODO(MXG): rclcpp should not actually be needed here, because rmf_traffic_ros2
-# has been split off into another package.
 
 file(GLOB_RECURSE bind_lib_srcs "src/*.cpp")
 pybind11_add_module(py_rmf_traffic
