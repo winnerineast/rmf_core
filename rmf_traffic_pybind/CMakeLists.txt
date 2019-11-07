@@ -24,14 +24,8 @@ pybind11_add_module(py_rmf_traffic
 )
 
 target_link_libraries(py_rmf_traffic
-  PUBLIC
+  PRIVATE
     rmf_traffic::rmf_traffic
-)
-
-target_include_directories(py_rmf_traffic
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 ament_export_dependencies(rmf_traffic)
@@ -48,5 +42,7 @@ install(
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
+
+message(${rmf_traffic_INCLUDE_DIRS})
 
 ament_package()
