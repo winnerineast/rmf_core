@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>rmf_traffic_pybind</name>
+  <version>0.0.1</version>
+  <description>Python bindings for rmf_traffic in Robotics Middleware Framework</description>
+  <maintainer email="cnboonhan94@gmail.com">C.N. Boon Han</maintainer>
+  <license>Apache License 2.0</license>
+  <author></author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rmf_traffic</depend>
+  <depend>rmf_traffic_msgs</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
