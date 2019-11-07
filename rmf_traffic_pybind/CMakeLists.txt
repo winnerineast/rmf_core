@@ -19,6 +19,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rmf_traffic REQUIRED)
 
 file(GLOB_RECURSE bind_lib_srcs "src/*.cpp")
+
 pybind11_add_module(py_rmf_traffic
   ${bind_lib_srcs}
 )
@@ -42,7 +43,5 @@ install(
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
-
-message(${rmf_traffic_INCLUDE_DIRS})
 
 ament_package()
