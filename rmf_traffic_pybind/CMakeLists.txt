@@ -17,4 +17,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rmf_traffic REQUIRED)
 find_package(rmf_traffic_msgs REQUIRED)
 
+add_subdirectory(external/pybind11)
+
+pybind11_add_module(py_rmf_traffic src/main.cpp)
+
 ament_package()
