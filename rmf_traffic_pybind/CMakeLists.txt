@@ -32,11 +32,6 @@ target_link_libraries(py_rmf_traffic
 ament_export_dependencies(rmf_traffic)
 
 install(
-  DIRECTORY include/
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
-
-install(
   DIRECTORY test/
   DESTINATION ${CMAKE_INSTALL_PREFIX}/test
 )
