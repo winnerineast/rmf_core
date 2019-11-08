@@ -37,11 +37,20 @@ install(
 )
 
 install(
+  DIRECTORY test/
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/test
+)
+
+install(
   TARGETS py_rmf_traffic
   EXPORT  py_rmf_traffic
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  
+  # For testing purposes, we put the output .so in the test install folder
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/test
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/test
 )
 
 ament_package()

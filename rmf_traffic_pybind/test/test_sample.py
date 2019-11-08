@@ -1,7 +1,4 @@
 # content of test_sample.py
-def func(x):
-    return x + 1
+import py_rmf_traffic as py
 
-
-def test_answer():
-    assert func(3) == 5
+assert(py.add(3,3) == 5)

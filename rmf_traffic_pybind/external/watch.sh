@@ -1,7 +1,7 @@
 #!/bin/bash
 trigger_func()
 {
-    cd /home/bhan/dev/rmf_core && colcon build --packages-select rmf_traffic_pybind && pytest rmf_traffic_pybind/test
+    cd /home/bhan/dev/rmf_core && colcon build --packages-select rmf_traffic_pybind && pytest install/rmf_traffic_pybind/test
 }
 
 if [ -z "$1" ]
