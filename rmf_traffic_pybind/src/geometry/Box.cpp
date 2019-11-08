@@ -5,5 +5,6 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(py_rmf_traffic, m) {
     py::class_<rmf_traffic::geometry::Box>(m, "Box")
-        .def(py::init<double, double>());
+        .def(py::init<double, double>())
+        .def("get_x_length", &rmf_traffic::geometry::Box::get_x_length);
 }
