@@ -10,6 +10,9 @@ if [ -z "$1" ]
     exit
 fi
 
+### Initialize environment variables here ###
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/bhan/dev/rmf_core/install/rmf_traffic/lib
+### Initialize environment variables here ###
 while :
 do
     inotifywait -e close_write $1 |  trigger_func
