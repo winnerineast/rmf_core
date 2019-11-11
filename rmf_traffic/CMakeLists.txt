@@ -5,6 +5,17 @@ project(rmf_traffic)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
 find_package(ament_cmake REQUIRED)
+find_package(rmf_utils REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(Eigen3 REQUIRED)
+
+include(CTest)
+if(BUILD_TESTING)
+  find_package(ament_cmake_clang_format REQUIRED)
+  set(clang_config_file)
+  find_file(clang_config_file NAMES "share/format/.clang-format-rmf")
+  ament_clang_format(ARGN src include test CONFIG_FILE ${clang_config_file})
+endif()
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
@@ -21,10 +32,7 @@ include(FindPkgConfig)
 pkg_check_modules(PC_FCL REQUIRED fcl)
 pkg_check_modules(PC_CCD REQUIRED ccd)
 
-find_package(ament_cmake REQUIRED)
-find_package(rmf_utils REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(Eigen3 REQUIRED)
+
 
 # ===== Traffic control library
 file(GLOB_RECURSE core_lib_srcs "src/rmf_traffic/*.cpp")
