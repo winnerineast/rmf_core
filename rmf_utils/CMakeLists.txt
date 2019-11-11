@@ -48,6 +48,11 @@ install(
   EXPORT  rmf_utils
 )
 
+install(
+  FILES test/format/.clang-format-rmf
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/format
+)
+
 add_subdirectory(test/unit)
 
 ament_package()
