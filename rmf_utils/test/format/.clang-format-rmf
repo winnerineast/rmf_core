@@ -3,7 +3,7 @@ Language:        Cpp
 # The default style guide for unspecified parameters
 # BasedOnStyle:  LLVM
 AccessModifierOffset: -2
-AlignAfterOpenBracket: Align
+AlignAfterOpenBracket: AlwaysBreak
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AlignEscapedNewlines: DontAlign
@@ -13,7 +13,7 @@ AllowAllParametersOfDeclarationOnNextLine: false
 #AllowShortBlocksOnASingleLine: false
 
 #Allow both single line and multiple line
-#AllowShortCaseLabelsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: true
 
 AllowShortFunctionsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
@@ -42,7 +42,7 @@ BraceWrapping:
   BeforeElse:      true
   IndentBraces:    false
   SplitEmptyFunction: true
-  SplitEmptyRecord: true
+  SplitEmptyRecord: false
   SplitEmptyNamespace: true
 #BreakAfterJavaFieldAnnotations: false
 #BreakBeforeBinaryOperators: None
@@ -78,14 +78,14 @@ IncludeIsMainRegex: '(Test)?$'
 IndentCaseLabels: true
 IndentPPDirectives: None
 IndentWidth:     2
-#IndentWrappedFunctionNames: false
+IndentWrappedFunctionNames: true
 #JavaImportGroups: []
 #JavaScriptQuotes: Leave
 #JavaScriptWrapImports: true
 KeepEmptyLinesAtTheStartOfBlocks: true
 MacroBlockBegin: ''
 MacroBlockEnd:   ''
-MaxEmptyLinesToKeep: 10
+MaxEmptyLinesToKeep: 3
 NamespaceIndentation: None
 #NamespaceMacros: []
 #ObjCBlockIndentWidth: 2
@@ -122,4 +122,3 @@ Standard:        C++11
 TabWidth:        2
 UseTab:          Never
 ...
-
