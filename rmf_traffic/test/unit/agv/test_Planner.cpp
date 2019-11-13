@@ -268,8 +268,8 @@ SCENARIO("Test planning")
     std::vector<rmf_traffic::Trajectory> solution;
     double goal_orientation=M_PI_2;
     // TODO(MXG): Move this content into a performance test folder
-    const bool test_performance = false;
-    //  const bool test_performance = true;
+//    const bool test_performance = false;
+      const bool test_performance = true;
     const std::size_t N = test_performance? 10 : 1;
     bool solved=false;
     const rmf_traffic::Time start_time = std::chrono::steady_clock::now();
@@ -309,8 +309,8 @@ SCENARIO("Test planning")
 
     double goal_orientation=M_PI;
     // TODO(MXG): Move this content into a performance test folder
-    const bool test_performance = false;
-    //  const bool test_performance = true;
+//    const bool test_performance = false;
+      const bool test_performance = true;
     const std::size_t N = test_performance? 10 : 1;
     bool solved=false;
     const rmf_traffic::Time start_time = std::chrono::steady_clock::now();
@@ -358,8 +358,8 @@ SCENARIO("Test planning")
 
 
     // TODO(MXG): Move this content into a performance test folder
-    const bool test_performance = false;
-  //  const bool test_performance = true;
+//    const bool test_performance = false;
+    const bool test_performance = true;
     const std::size_t N = test_performance? 10 : 1;
 
     rmf_traffic::Trajectory obstacle{test_map_name};
@@ -843,7 +843,8 @@ SCENARIO("Test planning")
    rmf_traffic::Time time= std::chrono::steady_clock::now();
    rmf_traffic::agv::Planner::Options options(vehicle_traits,graph, database);
 
-   const bool test_performance=false;
+//   const bool test_performance = false;
+   const bool test_performance = true;
    const std::size_t N = test_performance? 10 : 1;
   
  WHEN("Robot moves from 1->30 given multiple non-conflicting obstacles that partially overlap in time")
