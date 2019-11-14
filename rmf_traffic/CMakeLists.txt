@@ -13,7 +13,8 @@ include(CTest)
 if(BUILD_TESTING)
   find_package(ament_cmake_clang_format REQUIRED)
   find_package(ament_cmake_cpplint)
-  find_package(ament_cmake_uncrustify REQUIRED)
+  #find_package(ament_cmake_uncrustify REQUIRED)
+  find_package(rmf_cmake_uncrustify REQUIRED)
   find_package(ament_cmake_cppcheck REQUIRED)
 
   find_file(uncrustify_config_file NAMES "share/format/rmf_code_style.cfg")
@@ -23,7 +24,9 @@ if(BUILD_TESTING)
   #ament_clang_format(ARGN src include test CONFIG_FILE ${clang_config_file})
   ament_cpplint(ARGN src include test
                 FILTERS -,+build/header_guard)
-  ament_uncrustify(ARGN src include test)
+  #ament_uncrustify(ARGN src include test)
+  rmf_uncrustify(ARGN src include test CONFIG_FILE ${uncrustify_config_file})
+
   ament_cppcheck(ARGN src include test)
 
 endif()
