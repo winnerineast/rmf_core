@@ -53,6 +53,11 @@ install(
   DESTINATION ${CMAKE_INSTALL_DATADIR}/format
 )
 
+install(
+  FILES test/format/rmf_code_style.cfg
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/format
+)
+
 add_subdirectory(test/unit)
 
 ament_package()

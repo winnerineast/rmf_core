@@ -12,24 +12,20 @@ find_package(Eigen3 REQUIRED)
 include(CTest)
 if(BUILD_TESTING)
   find_package(ament_cmake_clang_format REQUIRED)
-  find_package(ament_cmake_cppcheck REQUIRED)
   find_package(ament_cmake_cpplint)
-  #find_package(ament_cmake_uncrustify REQUIRED)
-  #find_package(ament_lint_auto REQUIRED)
-  #ament_lint_auto_find_test_dependencies()
+  find_package(ament_cmake_uncrustify REQUIRED)
+  find_package(ament_cmake_cppcheck REQUIRED)
 
-  #ament_clang_format test
+  find_file(uncrustify_config_file NAMES "share/format/rmf_code_style.cfg")
   set(clang_config_file ${rmf_utils_INCLUDE_DIR})
-  ament_clang_format(ARGN src include test CONFIG_FILE ${clang_config_file})
-  #ament_cppcheck test
+  message(status ${uncrustify_config_file})
+
+  #ament_clang_format(ARGN src include test CONFIG_FILE ${clang_config_file})
+  ament_cpplint(ARGN src include test
+                FILTERS -,+build/header_guard)
+  ament_uncrustify(ARGN src include test)
   ament_cppcheck(ARGN src include test)
-  #ament_cpplint test
-  ament_cpplint(ARGN src include test 
-               FILTERS 
-               -,
-  #             +build/header_guard,
-               )
-  #ament_uncrustify()
+
 endif()
 
 # Default to C++14
