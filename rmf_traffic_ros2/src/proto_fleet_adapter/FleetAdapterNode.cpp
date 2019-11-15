@@ -184,6 +184,7 @@ void FleetAdapterNode::test_task_request(TestTaskRequest::UniquePtr msg)
   const auto new_target_time = std::chrono::steady_clock::now() + 2s;
   const auto time_adjustment = new_target_time - target_time;
   SubmitTrajectory::Request request_msg;
+  request_msg.fleet_control_level = request_msg.FULL_CONTROL_FLEET;
   for(auto t : solution)
   {
     t.begin()->adjust_finish_times(time_adjustment);
