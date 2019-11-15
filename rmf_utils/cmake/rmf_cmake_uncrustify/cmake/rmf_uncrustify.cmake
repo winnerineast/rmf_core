@@ -15,10 +15,15 @@
 #
 # Add a test to check the code for compliance with uncrustify.
 #
+# The default configuration file used for uncrustify is located at
+# configuration/ament_code_style.cfg within the ament_uncrustify directory.
+# The default configuration file can be overridden by the
+# argument 'CONFIG_FILE'.
+#
 # :param TESTNAME: the name of the test, default: "uncrustify"
 # :type TESTNAME: string
 # :param CONFIG_FILE: the path of the configuration file for
-#                     clang-format to consider
+#   ament_uncrustify to consider
 # :type CONFIG_FILE: string
 # :param MAX_LINE_LENGTH: override the maximum line length,
 #   the default is defined in ament_uncrustify
