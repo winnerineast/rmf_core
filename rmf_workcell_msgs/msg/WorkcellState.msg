@@ -1,7 +1,3 @@
-# This is a template message for all types of workcells to build off from,
-# which allows generic workcell libraries to have access to common message
-# fields.
-
 builtin_interfaces/Time time
 
 # A unique ID for this workcell
@@ -13,7 +9,10 @@ int32 IDLE=0
 int32 BUSY=1
 int32 OFFLINE=2
 
-# Queued up requests that are being handled by this workcell
-string[] request_guid_queue
+# The unique ID of the task/request that is currently being handled by this
+# workcell, and how much more time it needs to complete it
+string current_request_guid
+float32 seconds_remaining
 
-# below are custom workcell-type message fields
+# Queued up requests that are waiting to be handled by this workcell
+string[] request_guid_queue

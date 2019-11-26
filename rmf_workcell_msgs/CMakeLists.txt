@@ -20,11 +20,14 @@ set(msg_files
   "msg/Asset.msg"
   "msg/Trait.msg"
   "msg/WorkcellConfiguration.msg"
-
-  # Template messages for different type of workcells
   "msg/WorkcellState.msg"
-  "msg/WorkcellRequest.msg"
-  "msg/WorkcellResult.msg"
+  "msg/WorkcellRequestHeader.msg"
+  "msg/WorkcellResultHeader.msg"
+
+  # dispenser type workcell related messages
+  "msg/DispenserRequestItem.msg"
+  "msg/DispenserRequest.msg"
+  "msg/DispenserResult.msg"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

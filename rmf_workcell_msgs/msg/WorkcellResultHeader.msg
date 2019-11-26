@@ -1,6 +1,4 @@
-# This is a template message for all types of workcells to build off from,
-# which allows generic workcell libraries to have access to common message
-# fields.
+# Header message for different types of workcell result messages
 
 builtin_interfaces/Time time
 
@@ -15,5 +13,3 @@ uint8 status
 uint8 ACKNOWLEDGED=0
 uint8 SUCCESS=1
 uint8 FAILED=2
-
-# below are custom workcell message fields
