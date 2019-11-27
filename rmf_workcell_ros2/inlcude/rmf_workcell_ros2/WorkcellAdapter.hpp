@@ -73,9 +73,14 @@ public:
   ~WorkcellAdapter()
   {}
 
+  void start(WorkcellAdapterComponents _components)
+  {
+    
+  }
+
   struct WorkcellAdapterComponents
   {
-
+    rclcpp::
   };
 
 private:
