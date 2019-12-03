@@ -81,6 +81,7 @@ public:
 
   void find_plan()
   {
+    std::cout << " ==== Trying to find plan" << std::endl;
     _emergency_active = false;
     _waiting_on_emergency = false;
     _plans.clear();
@@ -141,10 +142,14 @@ public:
 
     if (main_plan)
     {
+//      RCLCPP_INFO(_node->get_logger(), "Using main plan");
+      std::cout << " ===== Using main plan" << std::endl;
       _plans.emplace_back(std::move(*std::move(main_plan)));
       return;
     }
 
+//    RCLCPP_INFO(_node->get_logger(), "Checking fallback plans");
+    std::cout << " ===== Checking fallback plans" << std::endl;
     return use_fallback(std::move(fallback_plans));
   }
 
@@ -243,6 +248,7 @@ public:
       {
         assert(trajectory.size() > 0);
 
+        std::cout << " ==== Adding trajectory of size " << trajectory.size() << std::endl;
         // If the trajectory has only one point then the robot doesn't need to
         // go anywhere.
         if (trajectory.size() < 2)
@@ -255,9 +261,9 @@ public:
     return trajectories;
   }
 
-
   void execute_plan()
   {
+    std::cout << " ==== Asking for plan to execute" << std::endl;
     _task->schedule.push_trajectories(
           collect_trajectories(),
           [&](){ command_plan(); });
@@ -269,6 +275,8 @@ public:
     for (const auto& plan : _plans)
       for (const auto& wp : plan.get_waypoints())
         _waypoints.emplace_back(wp);
+
+    std::cout << " ===== Commanding plan: " << get_status().text << std::endl;
 
     _command_segment = 0;
     send_next_command();
@@ -850,10 +858,10 @@ public:
     {
       const auto wp_it = waypoint_names.find(wp_index);
       return wp_it == waypoint_names.end()?
-            "waypoint #" + std::to_string(_goal_wp_index) : wp_it->second;
+            "#" + std::to_string(_goal_wp_index) : wp_it->second;
     };
 
-    status = "Moving to dispenser at [" + name_of(_goal_wp_index) + "] - ";
+    status = "Moving to waypoint [" + name_of(_goal_wp_index) + "] - ";
 
     if (_emergency_active)
       status += "Emergency Interruption - ";

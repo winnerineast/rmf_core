@@ -511,6 +511,8 @@ void FleetAdapterNode::loop_request(LoopRequest::UniquePtr msg)
   if (ignore_fleet(msg->robot_type))
     return;
 
+  std::cout << " ===== GOT A LOOP REQUEST" << std::endl;
+
   std::size_t fewest = std::numeric_limits<std::size_t>::max();
   RobotContext* fewest_context = nullptr;
   for (const auto& c : _contexts)
@@ -567,10 +569,16 @@ void FleetAdapterNode::fleet_state_update(FleetState::UniquePtr msg)
 {
   const auto& fleet_state = *msg;
   if (ignore_fleet(fleet_state.name))
+  {
+    std::cout << " === ignoring fleet state from " << msg->name << std::endl;
     return;
+  }
+
+  std::cout << " ===== GOT FLEET STATE" << std::endl;
 
   for (const auto& robot : fleet_state.robots)
   {
+    std::cout << "==== robot: " << robot.name << std::endl;
     const auto insertion = _contexts.insert(
           std::make_pair(robot.name, nullptr));
     const bool inserted = insertion.second;
