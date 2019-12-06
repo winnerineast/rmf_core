@@ -41,7 +41,7 @@ public:
       FleetAdapterNode* node,
       FleetAdapterNode::RobotContext* context,
       std::string task_id)
-  : Task(&node->get_fields().schedule, make_fleet_properties(node)),
+  : Task(node->get_fields().schedule.get(), make_fleet_properties(node)),
     _node(node),
     _context(context),
     _task_id(std::move(task_id)),

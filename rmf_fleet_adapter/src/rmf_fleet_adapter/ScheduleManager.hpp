@@ -32,6 +32,8 @@
 
 #include <rclcpp/node.hpp>
 
+#include <unordered_set>
+
 namespace rmf_fleet_adapter {
 
 class FleetAdapterNode;
@@ -64,13 +66,32 @@ struct ScheduleConnections
   EraseTrajectoriesPtr erase_trajectories;
   ResolveConflictsPtr resolve_conflicts;
 
-  static ScheduleConnections make(rclcpp::Node& node);
+  using ScheduleConflict = rmf_traffic_msgs::msg::ScheduleConflict;
+  using ScheduleConflictListener = Listener<ScheduleConflict>;
+
+  void insert_conflict_listener(ScheduleConflictListener* listener);
+
+  void remove_conflict_listener(ScheduleConflictListener* listener);
+
+  static std::unique_ptr<ScheduleConnections> make(rclcpp::Node& node);
 
   bool ready() const;
+
+private:
+
+  using ScheduleConflictListeners =
+      std::unordered_set<ScheduleConflictListener*>;
+  ScheduleConflictListeners _schedule_conflict_listeners;
+
+  using ScheduleConflictSub = rclcpp::Subscription<ScheduleConflict>;
+  ScheduleConflictSub::SharedPtr _schedule_conflict_sub;
+  void schedule_conflict_update(ScheduleConflict::UniquePtr msg);
+
 };
 
 //==============================================================================
-// TODO(MXG): Move this into rmf_traffic_ros2 as a generalized utility class
+// TODO(MXG): Move this into rmf_traffic_ros2 as a generalized utility class.
+// Consider renaming it to ScheduleParticipant.
 class ScheduleManager
 {
 public:

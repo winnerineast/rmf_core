@@ -60,24 +60,51 @@ public:
 };
 
 //==============================================================================
-ScheduleConnections ScheduleConnections::make(rclcpp::Node& node)
+void ScheduleConnections::insert_conflict_listener(
+    ScheduleConflictListener* listener)
 {
-  ScheduleConnections connections;
+  _schedule_conflict_listeners.insert(listener);
+}
 
-  connections.submit_trajectories = node.create_client<SubmitTrajectories>(
+//==============================================================================
+void ScheduleConnections::remove_conflict_listener(
+    ScheduleConflictListener* listener)
+{
+  _schedule_conflict_listeners.erase(listener);
+}
+
+//==============================================================================
+std::unique_ptr<ScheduleConnections> ScheduleConnections::make(
+    rclcpp::Node& node)
+{
+  auto connections = std::make_unique<ScheduleConnections>();
+
+  connections->submit_trajectories = node.create_client<SubmitTrajectories>(
         rmf_traffic_ros2::SubmitTrajectoriesSrvName);
 
-  connections.delay_trajectories = node.create_client<DelayTrajectories>(
+  connections->delay_trajectories = node.create_client<DelayTrajectories>(
         rmf_traffic_ros2::DelayTrajectoriesSrvName);
 
-  connections.replace_trajectories = node.create_client<ReplaceTrajectories>(
+  connections->replace_trajectories = node.create_client<ReplaceTrajectories>(
         rmf_traffic_ros2::ReplaceTrajectoriesSrvName);
 
-  connections.erase_trajectories = node.create_client<EraseTrajectories>(
+  connections->erase_trajectories = node.create_client<EraseTrajectories>(
         rmf_traffic_ros2::EraseTrajectoriesSrvName);
 
-  connections.resolve_conflicts = node.create_client<ResolveConflicts>(
+  connections->resolve_conflicts = node.create_client<ResolveConflicts>(
         rmf_traffic_ros2::ResolveConflictsSrvName);
+
+  auto* c_ptr = connections.get();
+  connections->_schedule_conflict_sub =
+      node.create_subscription<ScheduleConflict>(
+        rmf_traffic_ros2::ScheduleConflictTopicName,
+        rclcpp::SystemDefaultsQoS(),
+        [c_ptr](ScheduleConflict::UniquePtr msg)
+  {
+    const auto listeners = c_ptr->_schedule_conflict_listeners;
+    for (auto& listener : listeners)
+      listener->receive(*msg);
+  });
 
   return connections;
 }
@@ -101,9 +128,10 @@ ScheduleManager::ScheduleManager(
     std::function<void()> revision_callback)
 : _connections(connections),
   _properties(std::move(properties)),
-  _revision_callback(std::move(revision_callback))
+  _revision_callback(std::move(revision_callback)),
+  _conflict_listener(std::make_unique<ConflictListener>(this))
 {
-  // Do nothing
+  _connections->insert_conflict_listener(_conflict_listener.get());
 }
 
 namespace {
@@ -217,6 +245,8 @@ const std::vector<rmf_traffic::schedule::Version>& ScheduleManager::ids() const
 //==============================================================================
 ScheduleManager::~ScheduleManager()
 {
+  _connections->remove_conflict_listener(_conflict_listener.get());
+
   if (!_schedule_ids.empty())
   {
     using EraseTrajectories = rmf_traffic_msgs::srv::EraseTrajectories;

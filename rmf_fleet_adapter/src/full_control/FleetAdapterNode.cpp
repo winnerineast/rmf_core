@@ -90,7 +90,7 @@ std::shared_ptr<FleetAdapterNode> FleetAdapterNode::make()
     rclcpp::spin_some(node);
 
     bool ready = true;
-    ready &= connections.ready();
+    ready &= connections->ready();
     ready &= (mirror_future.wait_for(0s) == std::future_status::ready);
 
     if (ready)
@@ -462,13 +462,6 @@ void FleetAdapterNode::start(Fields fields)
     this->lift_state_update(std::move(msg));
   });
 
-  _schedule_conflict_sub = create_subscription<ScheduleConflict>(
-        rmf_traffic_ros2::ScheduleConflictTopicName, default_qos,
-        [&](ScheduleConflict::UniquePtr msg)
-  {
-    this->schedule_conflict_update(std::move(msg));
-  });
-
   _emergency_notice_sub = create_subscription<EmergencyNotice>(
         rmf_traffic_ros2::EmergencyTopicName, default_qos,
         [&](EmergencyNotice::UniquePtr msg)
@@ -615,13 +608,6 @@ void FleetAdapterNode::door_state_update(DoorState::UniquePtr msg)
 void FleetAdapterNode::lift_state_update(LiftState::UniquePtr msg)
 {
   for (const auto& listener : lift_state_listeners)
-    listener->receive(*msg);
-}
-
-//==============================================================================
-void FleetAdapterNode::schedule_conflict_update(ScheduleConflict::UniquePtr msg)
-{
-  for (const auto& listener : schedule_conflict_listeners)
     listener->receive(*msg);
 }
 

@@ -51,7 +51,7 @@ std::shared_ptr<FleetAdapterNode> FleetAdapterNode::make()
   while(rclcpp::ok() && std::chrono::steady_clock::now() < stop_time)
   {
     rclcpp::spin_some(node);
-    if (node->_connections.ready())
+    if (node->_connections->ready())
       return node;
   }
 
@@ -66,7 +66,7 @@ std::shared_ptr<FleetAdapterNode> FleetAdapterNode::make()
 }
 
 FleetAdapterNode::ScheduleEntry::ScheduleEntry(FleetAdapterNode* node)
-: schedule(&node->_connections, node->_properties, [](){}),
+: schedule(node->_connections.get(), node->_properties, [](){}),
   trajectory("")
 {
   // Do nothing
