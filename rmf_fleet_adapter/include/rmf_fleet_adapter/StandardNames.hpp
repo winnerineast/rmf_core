@@ -43,6 +43,8 @@ const std::string DeliveryTopicName = "delivery_requests";
 const std::string LoopRequestTopicName = "loop_requests";
 const std::string TaskSummaryTopicName = "task_summaries";
 
+const std::string YieldTopicName = "yield";
+
 } // namespace rmf_fleet_adapter
 
 #endif // RMF_FLEET_ADAPTER__STANDARDNAMES_HPP

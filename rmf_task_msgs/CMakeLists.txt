@@ -25,6 +25,7 @@ set(msg_files
   "msg/TaskSummary.msg"
   "msg/Tasks.msg"
   "msg/Loop.msg"
+  "msg/Yield.msg"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

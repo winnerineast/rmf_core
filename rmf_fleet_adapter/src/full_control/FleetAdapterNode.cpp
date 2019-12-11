@@ -37,6 +37,17 @@ namespace rmf_fleet_adapter {
 namespace full_control {
 
 //==============================================================================
+rmf_traffic::agv::VehicleTraits make_desperate_traits(
+    rmf_traffic::agv::VehicleTraits based_on)
+{
+  based_on.set_profile(
+        rmf_traffic::Trajectory::Profile::make_guided(
+              rmf_traffic::geometry::make_final_convex<
+              rmf_traffic::geometry::Circle>(0.001)));
+  return based_on;
+}
+
+//==============================================================================
 std::shared_ptr<FleetAdapterNode> FleetAdapterNode::make()
 {
   const auto node = std::shared_ptr<FleetAdapterNode>(new FleetAdapterNode);
@@ -260,8 +271,12 @@ rmf_traffic::Duration FleetAdapterNode::get_delay_threshold() const
 }
 
 //==============================================================================
-const rmf_traffic::agv::Planner& FleetAdapterNode::get_planner() const
+const rmf_traffic::agv::Planner& FleetAdapterNode::get_planner(
+    const bool desperate) const
 {
+  if (desperate)
+    return _field->desperate_planner;
+
   return _field->planner;
 }
 
@@ -520,6 +535,13 @@ void FleetAdapterNode::start(Fields fields)
     this->emergency_notice_update(std::move(msg));
   });
 
+  _yield_notice_sub = create_subscription<YieldNotice>(
+        YieldTopicName, default_qos,
+        [&](YieldNotice::UniquePtr msg)
+  {
+    this->yield_notice_update(std::move(msg));
+  });
+
   path_request_publisher = create_publisher<PathRequest>(
         PathRequestTopicName, default_qos);
 
@@ -698,6 +720,12 @@ void FleetAdapterNode::emergency_notice_update(EmergencyNotice::UniquePtr msg)
     for (const auto& c : _contexts)
       c.second->resume();
   }
+}
+
+//==============================================================================
+void FleetAdapterNode::yield_notice_update(YieldNotice::UniquePtr msg)
+{
+//  if ()
 }
 
 } // namespace full_control

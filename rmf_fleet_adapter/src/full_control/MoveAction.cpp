@@ -99,13 +99,19 @@ public:
     return std::unordered_set<uint64_t>{ids.begin(), ids.end()};
   }
 
-  bool find_plan()
+  void retry_later()
+  {
+    _retry_time = _node->now() + std::chrono::seconds(5);
+    retry(true);
+  }
+
+  bool find_plan(const bool is_desperate = false)
   {
     _emergency_active = false;
     _waiting_on_emergency = false;
     _plans.clear();
 
-    const auto& planner = _node->get_planner();
+    const auto& planner = _node->get_planner(is_desperate);
     const auto plan_starts = _node->compute_plan_starts(_context->location);
 
     bool interrupt_flag = false;
@@ -118,28 +124,32 @@ public:
     bool fallback_plan_solved = false;
     std::condition_variable plan_solved_cv;
     rmf_utils::optional<rmf_traffic::agv::Plan> main_plan;
-    std::thread main_plan_thread = std::thread(
-          [&]()
+    std::thread main_plan_thread;
+    if (!is_desperate)
     {
-      main_plan = planner.plan(
-            plan_starts, rmf_traffic::agv::Plan::Goal(_goal_wp_index), options);
-      if (main_plan)
+      main_plan_thread = std::thread(
+            [&]()
       {
-        main_plan_solved = true;
-        plan_solved_cv.notify_all();
-      }
-      else
-      {
-        main_plan_failed = true;
-      }
-    });
+        main_plan = planner.plan(
+              plan_starts, rmf_traffic::agv::Plan::Goal(_goal_wp_index), options);
+        if (main_plan)
+        {
+          main_plan_solved = true;
+          plan_solved_cv.notify_all();
+        }
+        else
+        {
+          main_plan_failed = true;
+        }
+      });
+    }
 
     std::vector<std::thread> fallback_plan_threads;
     std::vector<rmf_utils::optional<rmf_traffic::agv::Plan>> fallback_plans;
     std::mutex fallback_plan_mutex;
     for (const std::size_t goal_wp : _fallback_wps)
     {
-      fallback_plan_threads.emplace_back(std::thread([&]()
+      fallback_plan_threads.emplace_back(std::thread([&, goal_wp]()
       {
         auto fallback_plan = planner.plan(
               plan_starts, rmf_traffic::agv::Plan::Goal(goal_wp), options);
@@ -175,7 +185,9 @@ public:
     }
 
     interrupt_flag = true;
-    main_plan_thread.join();
+    if (main_plan_thread.joinable())
+      main_plan_thread.join();
+
     for (auto& fallback_thread : fallback_plan_threads)
       fallback_thread.join();
 
@@ -188,9 +200,9 @@ public:
     return use_fallback(std::move(fallback_plans));
   }
 
-  void find_and_execute_plan()
+  void find_and_execute_plan(const bool desperate = false)
   {
-    if (find_plan())
+    if (find_plan(desperate))
       return execute_plan();
 
     cancel(std::chrono::seconds(5));
@@ -201,7 +213,7 @@ public:
     if (_emergency_active)
       return find_and_execute_emergency_plan();
 
-    find_and_execute_plan();
+    find_and_execute_plan(true);
   }
 
   bool use_fallback(
@@ -212,20 +224,24 @@ public:
     {
       RCLCPP_WARN(
             _node->get_logger(),
-            "Robot [" + _context->robot_name() + "] is stuck! We will try to "
-            "find a path again soon.");
+            "Robot [" + _context->robot_name() + "] is VERY stuck! We will try "
+            "to find a path again soon.");
 
       return false;
     }
     const auto i_nearest = *i_nearest_opt;
 
     const auto& fallback_plan = *fallback_plans[i_nearest];
+
+    _plans.emplace_back(fallback_plan);
+
     const std::size_t fallback_waypoint =
         *fallback_plan.get_waypoints().back().graph_index();
     const double fallback_orientation =
         fallback_plan.get_waypoints().back().position()[2];
     const auto fallback_end_time =
         fallback_plan.get_waypoints().back().time();
+
 
     const auto& planner = _node->get_planner();
 
@@ -243,7 +259,7 @@ public:
 
     for (std::size_t i=1; i < 9; ++i)
     {
-      resume_plan_threads.emplace_back(std::thread([&]()
+      resume_plan_threads.emplace_back(std::thread([&, i]()
       {
         const auto resume_time = fallback_end_time + i*t_spread;
         auto resume_plan = planner.plan(
@@ -282,13 +298,11 @@ public:
       RCLCPP_WARN(
             _node->get_logger(),
             "Robot [" + _context->robot_name() + "] is stuck! We will try to "
-            "find a path again soon.");
-
-      return false;
+            "fall back to an emergency hold spot and retry soon.");
+      _retry_time = _node->now() + std::chrono::seconds(5);
     }
     else
     {
-      _plans.emplace_back(fallback_plan);
       _plans.emplace_back(*resume_plans[*quickest_finish_opt]);
     }
 
@@ -527,7 +541,7 @@ public:
       event_wp.event()->execute(_event_executor);
   }
 
-  void retry()
+  void retry(const bool only_fallback = false)
   {
     if (_emergency_active)
     {
@@ -535,7 +549,7 @@ public:
       return;
     }
 
-    find_and_execute_plan();
+    find_and_execute_plan(only_fallback);
   }
 
   bool handle_retry()
@@ -573,10 +587,11 @@ public:
     {
       RCLCPP_WARN(
             _node->get_logger(),
-            "Attempting to replan the movement for [" + _context->robot_name()
+            "Attempting to back off and replan the movement for ["
+            + _context->robot_name()
             + "] because the delay has been too long.");
       // If the dealys have piled up, then consider just restarting altogether.
-      return retry();
+      return retry_later();
     }
 
     const auto new_delay = new_finish_estimate - _finish_estimate;

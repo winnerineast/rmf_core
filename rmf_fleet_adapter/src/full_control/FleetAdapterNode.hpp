@@ -37,6 +37,7 @@
 #include <rmf_task_msgs/msg/delivery.hpp>
 #include <rmf_task_msgs/msg/loop.hpp>
 #include <rmf_task_msgs/msg/task_summary.hpp>
+#include <rmf_task_msgs/msg/yield.hpp>
 
 #include <rmf_traffic/Time.hpp>
 #include <rmf_traffic/agv/Graph.hpp>
@@ -59,6 +60,9 @@
 
 namespace rmf_fleet_adapter {
 namespace full_control {
+
+rmf_traffic::agv::VehicleTraits make_desperate_traits(
+    rmf_traffic::agv::VehicleTraits based_on);
 
 //==============================================================================
 class FleetAdapterNode : public rclcpp::Node
@@ -117,7 +121,8 @@ public:
 
   rmf_traffic::Duration get_delay_threshold() const;
 
-  const rmf_traffic::agv::Planner& get_planner() const;
+  const rmf_traffic::agv::Planner& get_planner(
+      const bool desperate = false) const;
 
   const rmf_traffic::agv::Graph& get_graph() const;
 
@@ -137,6 +142,7 @@ public:
     GraphInfo graph_info;
     rmf_traffic::agv::VehicleTraits traits;
     rmf_traffic::agv::Planner planner;
+    rmf_traffic::agv::Planner desperate_planner;
 
     Fields(
         GraphInfo graph_info_,
@@ -149,6 +155,10 @@ public:
       traits(std::move(traits_)),
       planner(
         rmf_traffic::agv::Planner::Configuration(graph_info.graph, traits),
+        rmf_traffic::agv::Planner::Options(mirror.viewer())),
+      desperate_planner(
+        rmf_traffic::agv::Planner::Configuration(
+          graph_info.graph, make_desperate_traits(traits)),
         rmf_traffic::agv::Planner::Options(mirror.viewer()))
     {
       // Do nothing
@@ -256,6 +266,13 @@ private:
   void emergency_notice_update(EmergencyNotice::UniquePtr msg);
 
   bool _in_emergency_mode = false;
+
+  using YieldNotice = rmf_task_msgs::msg::Yield;
+  using YieldNoticeSub = rclcpp::Subscription<YieldNotice>;
+  YieldNoticeSub::SharedPtr _yield_notice_sub;
+  void yield_notice_update(YieldNotice::UniquePtr msg);
+
+  std::unordered_map<std::string, bool> _yield_active;
 
   using Context =
       std::unordered_map<std::string, std::unique_ptr<RobotContext>>;
