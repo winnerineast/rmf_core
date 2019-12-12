@@ -356,7 +356,7 @@ public:
       for (const auto& wp : plan.get_waypoints())
         _remaining_waypoints.emplace_back(wp);
 
-    return send_next_command();
+    return send_next_command(false);
   }
 
   std::string task_id() const
