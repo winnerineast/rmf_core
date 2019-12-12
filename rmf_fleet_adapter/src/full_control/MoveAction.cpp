@@ -785,7 +785,7 @@ public:
 
       using Parameter = rmf_fleet_msgs::msg::ModeParameter;
       Parameter p;
-      p.name = "dock_name";
+      p.name = "docking";
       p.value = dock_name;
       request.parameters.emplace_back(std::move(p));
 
