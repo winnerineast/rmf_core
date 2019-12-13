@@ -383,15 +383,19 @@ public:
 
     const auto& graph = _node->get_graph();
 
-    auto make_location = [&](
-        const Eigen::Vector3d& p,
-        const rmf_traffic::Time t)
+    std::cout << "Issuing command for [" << _context->robot_name() << "]:";
+    auto make_location = [&](const rmf_traffic::agv::Plan::Waypoint& wp)
     {
+      const Eigen::Vector3d& p = wp.position();
+      const rmf_traffic::Time t = wp.time();
       rmf_fleet_msgs::msg::Location location;
       location.t = rmf_traffic_ros2::convert(t);
       location.x = p[0];
       location.y = p[1];
       location.yaw = p[2];
+
+      std::cout << " -- [" << rmf_traffic::time::to_seconds(wp.time().time_since_epoch())
+                << "] " << p.transpose() << std::endl;
 
       // TODO(MXG): Fix this assumption that every waypoint is on one map
       location.level_name = graph.get_waypoint(0).get_map_name();
@@ -410,15 +414,14 @@ public:
       // However, some events (such as docking) will leave the robot in a
       // different location than it started in, so those should not be
       // continuous.
-      const auto& wp = _issued_waypoints.back();
-      _command->path.emplace_back(make_location(wp.position(), wp.time()));
+      _command->path.emplace_back(make_location(_issued_waypoints.back()));
     }
 
     std::size_t i=0;
     for (; i < _remaining_waypoints.size(); ++i)
     {
       const auto& wp = _remaining_waypoints[i];
-      _command->path.emplace_back(make_location(wp.position(), wp.time()));
+      _command->path.emplace_back(make_location(wp));
 
       // Break off the command wherever an event occurs, because those are
       // points where the fleet adapter will need to issue door/lift requests.
