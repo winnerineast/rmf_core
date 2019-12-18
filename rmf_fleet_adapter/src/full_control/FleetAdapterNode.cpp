@@ -148,6 +148,15 @@ void FleetAdapterNode::RobotContext::next_task()
 }
 
 //==============================================================================
+void FleetAdapterNode::RobotContext::_next_action()
+{
+  if (_task && _task->_trigger_next())
+    return;
+
+  next_task();
+}
+
+//==============================================================================
 void FleetAdapterNode::RobotContext::add_task(std::unique_ptr<Task> new_task)
 {
   if (!_task)
@@ -449,6 +458,14 @@ auto FleetAdapterNode::get_fields() const -> const Fields&
 }
 
 //==============================================================================
+void FleetAdapterNode::request_next_action(const RobotContext* context)
+{
+  std_msgs::msg::String msg;
+  msg.data = context->robot_name();
+  _next_action_pub->publish(msg);
+}
+
+//==============================================================================
 FleetAdapterNode::FleetAdapterNode()
 : rclcpp::Node("fleet_adapter"),
   _fleet_name(get_fleet_name_parameter(*this))
@@ -537,6 +554,16 @@ void FleetAdapterNode::start(Fields fields)
 
   task_summary_publisher = create_publisher<TaskSummary>(
         TaskSummaryTopicName, default_qos);
+
+  _next_action_pub = create_publisher<std_msgs::msg::String>(
+        _fleet_name + "/next_action", default_qos);
+
+  _next_action_sub = create_subscription<std_msgs::msg::String>(
+        _fleet_name + "/next_action", default_qos,
+        [&](std_msgs::msg::String::UniquePtr msg)
+  {
+    this->trigger_next_action(std::move(msg));
+  });
 }
 
 //==============================================================================
@@ -733,6 +760,21 @@ void FleetAdapterNode::emergency_notice_update(EmergencyNotice::UniquePtr msg)
     for (const auto& c : _contexts)
       c.second->resume();
   }
+}
+
+//==============================================================================
+void FleetAdapterNode::trigger_next_action(std_msgs::msg::String::UniquePtr msg)
+{
+  const auto it = _contexts.find(msg->data);
+  if (it == _contexts.end())
+  {
+    RCLCPP_ERROR(
+          get_logger(),
+          "BIG BUG: Missing robot name [" + msg->data + "] for next action!");
+    return;
+  }
+
+  it->second->_next_action();
 }
 
 } // namespace full_control

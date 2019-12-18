@@ -44,6 +44,7 @@
 #include <rmf_traffic/agv/Planner.hpp>
 
 #include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/string.hpp>
 
 #include <rclcpp/node.hpp>
 
@@ -83,6 +84,8 @@ public:
     Location location;
 
     void next_task();
+
+    void _next_action();
 
     void add_task(std::unique_ptr<Task> new_task);
 
@@ -203,6 +206,8 @@ public:
   using TaskSummaryPub = rclcpp::Publisher<TaskSummary>;
   TaskSummaryPub::SharedPtr task_summary_publisher;
 
+  void request_next_action(const RobotContext* context);
+
 private:
 
   FleetAdapterNode();
@@ -255,6 +260,10 @@ private:
   using EmergencyNoticeSub = rclcpp::Subscription<EmergencyNotice>;
   EmergencyNoticeSub::SharedPtr _emergency_notice_sub;
   void emergency_notice_update(EmergencyNotice::UniquePtr msg);
+
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _next_action_pub;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _next_action_sub;
+  void trigger_next_action(std_msgs::msg::String::UniquePtr msg);
 
   bool _in_emergency_mode = false;
 

@@ -55,7 +55,12 @@ public:
     _action_queue = std::move(action_queue);
   }
 
-  void next()
+  void next() final
+  {
+    _node->request_next_action(_context);
+  }
+
+  bool _trigger_next() override
   {
     if (!_start_time)
       _start_time = _node->get_clock()->now();
@@ -65,15 +70,16 @@ public:
       std::cout << "no more actions - requesting next task" << std::endl;
       _action = nullptr;
       report_status();
-      return _context->next_task();
+      return false;
     }
 
     _action = std::move(_action_queue.front());
     _action_queue.pop();
     _action->execute();
+    return true;
   }
 
-  void interrupt()
+  void interrupt() final
   {
     if (!_action)
     {
@@ -87,7 +93,7 @@ public:
     _action->interrupt();
   }
 
-  void resume()
+  void resume() final
   {
     if (!_action)
     {
@@ -115,7 +121,7 @@ public:
     _action->resolve();
   }
 
-  void report_status()
+  void report_status() final
   {
     rmf_task_msgs::msg::TaskSummary summary;
     summary.task_id = id();
@@ -141,7 +147,7 @@ public:
     _node->task_summary_publisher->publish(summary);
   }
 
-  void critical_failure(const std::string& error)
+  void critical_failure(const std::string& error) final
   {
     std::cout << " =============== CRITICAL FAILURE HAS OCCURRED" << std::endl;
     throw std::runtime_error("baaaaaaahhhhhhh");
@@ -157,12 +163,12 @@ public:
     _context->discard_task(this);
   }
 
-  const std::string& id() const
+  const std::string& id() const final
   {
     return _task_id;
   }
 
-  const rclcpp::Time& start_time() const
+  const rclcpp::Time& start_time() const final
   {
     return *_start_time;
   }

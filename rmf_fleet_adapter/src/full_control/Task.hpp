@@ -35,6 +35,8 @@ public:
 
   virtual void next() = 0;
 
+  virtual bool _trigger_next() = 0;
+
   virtual void interrupt() = 0;
 
   virtual void resume() = 0;

@@ -275,6 +275,7 @@ public:
     _context->remove_listener(&_robot_state_listener);
     _node->dispenser_state_listeners.erase(&_dispenser_state_listener);
     _node->dispenser_result_listeners.erase(&_dispenser_result_listener);
+    std::cout << "Leaving destructor of DispenseAction" << std::endl;
   }
 
 private:
