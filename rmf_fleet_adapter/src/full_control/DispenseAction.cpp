@@ -129,7 +129,7 @@ public:
   void finish()
   {
     assert(_request_finished);
-    _task->report_status();
+//    _task->report_status();
     _task->next();
   }
 
@@ -282,6 +282,7 @@ public:
     _context->remove_listener(&_robot_state_listener);
     _node->dispenser_state_listeners.erase(&_dispenser_state_listener);
     _node->dispenser_result_listeners.erase(&_dispenser_result_listener);
+    std::cout << "Leaving the destructor of the DispenseAction" << std::endl;
   }
 
 private:

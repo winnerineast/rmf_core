@@ -128,9 +128,13 @@ template<
 NodePtr search(
     Context&& context,
     InitialNodeArgs&& initial_node_args,
-    const bool* interrupt_flag)
+    const bool* interrupt_flag,
+    std::vector<NodePtr>* history = nullptr,
+    std::size_t* max_queue_size = nullptr)
 {
   using SearchQueue = typename Expander::SearchQueue;
+  if (max_queue_size)
+    *max_queue_size = 0;
 
   Expander expander(context);
 
@@ -139,7 +143,16 @@ NodePtr search(
 
   while(!queue.empty() && !(interrupt_flag && *interrupt_flag))
   {
+    if (max_queue_size)
+      *max_queue_size = std::max(*max_queue_size, queue.size());
+
+    if (queue.size() > 50)
+      return nullptr;
+
     NodePtr top = queue.top();
+    if (history)
+      history->push_back(top);
+
     queue.pop();
 
     if(expander.is_finished(top))
@@ -552,15 +565,32 @@ struct DifferentialDriveExpander
       {
         // The pair was inserted, which implies that the cost estimate for this
         // waypoint has never been found before, and we should compute it now.
+        std::vector<EuclideanExpander::NodePtr> history;
         const EuclideanExpander::NodePtr solution = search<EuclideanExpander>(
               EuclideanExpander::Context{context.graph, context.final_waypoint},
               EuclideanExpander::InitialNodeArgs{waypoint},
-              context.interrupt_flag);
+              nullptr, &history);
 
         // TODO(MXG): Instead of asserting that the goal exists, we should
         // probably take this opportunity to shortcircuit the planner and return
         // that there is no solution.
-        assert(solution != nullptr);
+//        assert(solution != nullptr);
+        if (!solution)
+        {
+          std::cout << "Failed to find solution from "
+                    << waypoint << " to " << context.final_waypoint
+                    << ". Searched: ";
+          for (const auto& n : history)
+          {
+            if (n->parent)
+              std::cout << "\n -- " << n->parent->waypoint << " --> " << n->waypoint;
+            else
+              std::cout << "\n -- start from " << n->waypoint;
+          }
+          std::cout << std::endl;
+
+          assert(false);
+        }
 
         std::vector<Eigen::Vector3d> positions;
         EuclideanExpander::NodePtr euclidean_node = solution;
@@ -1276,6 +1306,7 @@ struct DifferentialDriveExpander
       // optimal solution could still exist.
     }
 
+    assert(parent_waypoint < _context.graph.lanes_from.size());
     const std::vector<std::size_t>& lanes =
         _context.graph.lanes_from[parent_waypoint];
 
@@ -1347,6 +1378,8 @@ public:
           std::make_pair(goal_waypoint, Heuristic{})).first->second;
     const bool* const interrupt_flag = options.interrupt_flag();
 
+    std::size_t max_queue_size;
+    std::vector<DifferentialDriveExpander::NodePtr> history;
     const NodePtr solution = search<DifferentialDriveExpander>(
           DifferentialDriveExpander::Context{
             _graph,
@@ -1363,7 +1396,9 @@ public:
             h
           },
           DifferentialDriveExpander::InitialNodeArgs{starts},
-          interrupt_flag);
+          interrupt_flag,
+          &history,
+          &max_queue_size);
 
     if (!solution)
       return rmf_utils::nullopt;
@@ -1371,6 +1406,9 @@ public:
     auto trajectories = reconstruct_trajectories(solution);
     auto waypoints = reconstruct_waypoints(solution, _graph);
     auto start_index = find_start_index(solution);
+
+    std::cout << "Plan queue size finished as: "
+              << history.size() << " | max: " << max_queue_size << std::endl;
 
     return Result{
         std::move(trajectories),

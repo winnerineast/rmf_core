@@ -133,6 +133,7 @@ public:
     }
     else
     {
+      std::cout << "Emitting the finished status" << std::endl;
       summary.status = "Finished";
       summary.end_time = _node->now();
     }
