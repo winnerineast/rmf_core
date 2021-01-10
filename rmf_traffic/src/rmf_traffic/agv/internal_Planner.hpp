@@ -20,6 +20,8 @@
 
 #include <rmf_traffic/agv/Planner.hpp>
 
+#include "internal_planning.hpp"
+
 namespace rmf_traffic {
 namespace agv {
 
@@ -34,17 +36,45 @@ public:
 
   rmf_utils::optional<std::size_t> graph_index;
 
+  std::size_t itinerary_index;
+
+  std::size_t trajectory_index;
+
   Graph::Lane::EventPtr event;
 
   template<typename... Args>
-  static Waypoint make(Args&&... args)
+  static Waypoint make(Args&& ... args)
   {
     Waypoint wp;
     wp._pimpl = rmf_utils::make_impl<Implementation>(
-          Implementation{std::forward<Args>(args)...});
+      Implementation{std::forward<Args>(args)...});
 
     return wp;
   }
+};
+
+//==============================================================================
+class Planner::Result::Implementation
+{
+public:
+
+  planning::InterfacePtr interface;
+  planning::State state;
+  std::optional<Plan> plan;
+
+  static Result generate(
+    planning::InterfacePtr interface,
+    const std::vector<Planner::Start>& starts,
+    Planner::Goal goal,
+    Planner::Options options);
+
+  static Result setup(
+    planning::InterfacePtr interface,
+    const std::vector<Planner::Start>& starts,
+    Planner::Goal goal,
+    Planner::Options options);
+
+  static const Implementation& get(const Result& r);
 
 };
 

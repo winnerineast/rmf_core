@@ -27,49 +27,259 @@ namespace rmf_traffic {
 namespace internal {
 
 //==============================================================================
-struct SegmentElement;
-using SegmentList = std::list<SegmentElement>;
-using OrderMap = std::map<Time, SegmentList::iterator>;
+struct WaypointElement;
+using WaypointList = std::list<WaypointElement>;
 
-struct SegmentElement
+//==============================================================================
+template <typename Key, typename Value>
+class TemplateOrderMap
+{
+public:
+
+  struct Element
+  {
+    Key key;
+    Value value;
+
+    template <typename... Args>
+    static Element make(const Key& key, Args&&... args)
+    {
+      return Element{key, Value{std::forward<Args>(args)...}};
+    }
+  };
+
+  struct Comparison
+  {
+    bool operator()(const Element& element, const Key& key)
+    {
+      return element.key < key;
+    }
+  };
+
+  using Storage = std::vector<Element>;
+  using iterator = typename Storage::iterator;
+  using const_iterator = typename Storage::const_iterator;
+
+  iterator begin()
+  {
+    return _storage.begin();
+  }
+
+  const_iterator begin() const
+  {
+    return _storage.begin();
+  }
+
+  iterator end()
+  {
+    return _storage.end();
+  }
+
+  const_iterator end() const
+  {
+    return _storage.end();
+  }
+
+  iterator lower_bound(const Key& k)
+  {
+    return std::lower_bound(_storage.begin(), _storage.end(), k, Comparison());
+  }
+
+  const_iterator lower_bound(const Key& k) const
+  {
+    return std::lower_bound(_storage.begin(), _storage.end(), k, Comparison());
+  }
+
+  template <typename... Args>
+  iterator emplace_hint(iterator hint, const Key& key, Args&&... args)
+  {
+    if (_storage.empty())
+    {
+      _storage.push_back(Element::make(key, std::forward<Args>(args)...));
+      return _storage.begin();
+    }
+
+    if (hint == _storage.end())
+    {
+      if ( (--const_iterator(hint))->key < key)
+      {
+        return _storage.emplace(
+              _storage.end(), Element::make(key, std::forward<Args>(args)...));
+      }
+
+      // If the above test failed, then we were given a bad hint. Let's just use
+      // std::lower_bound to find the right place for this insertion.
+      const auto new_hint = lower_bound(key);
+
+      if (new_hint->key == key)
+        return new_hint;
+
+      return _storage.emplace(
+            new_hint, Element::make(key, std::forward<Args>(args)...));
+    }
+
+    if (hint->key == key)
+      return hint;
+
+    if (key < hint->key)
+    {
+      if (hint == _storage.begin())
+      {
+        return _storage.emplace(
+              hint, Element::make(key, std::forward<Args>(args)...));
+      }
+      else if ( (--const_iterator(hint))->key < key)
+      {
+        return _storage.emplace(
+              hint, Element::make(key, std::forward<Args>(args)...));
+      }
+
+      // If the above tests failed, then we don't have a perfect hint, but at
+      // least we know that it's on the correct side of hint, so we'll use that
+      // for the upper bound on the search.
+      const auto new_hint =
+          std::lower_bound(_storage.begin(), hint, key, Comparison());
+
+      if (new_hint->key == key)
+        return new_hint;
+
+      return _storage.emplace(
+            new_hint, Element::make(key, std::forward<Args>(args)...));
+    }
+
+    // If the above tests failed, then we have been given a bad hint, but at
+    // least we know hint is on the lower end of the bound.
+    const auto new_hint =
+        std::lower_bound(hint, _storage.end(), key, Comparison());
+
+    if (new_hint->key == key)
+      return new_hint;
+
+    return _storage.emplace(
+          new_hint, Element::make(key, std::forward<Args>(args)...));
+  }
+
+  iterator erase(const Key& key)
+  {
+    const auto it = lower_bound(key);
+    if (it->key == key)
+      return _storage.erase(it);
+
+    return _storage.end();
+  }
+
+  iterator erase(iterator begin, iterator end)
+  {
+    return _storage.erase(begin, end);
+  }
+
+  iterator erase(iterator it)
+  {
+    return _storage.erase(it);
+  }
+
+  iterator erase(const_iterator it)
+  {
+    return _storage.erase(it);
+  }
+
+  iterator find(const Key& key)
+  {
+    const auto it = lower_bound(key);
+    if (it->key == key)
+      return it;
+
+    return _storage.end();
+  }
+
+  const_iterator find(const Key& key) const
+  {
+    const auto it = lower_bound(key);
+    if (it->key == key)
+      return it;
+
+    return _storage.end();
+  }
+
+  Element& operator[](const std::size_t index)
+  {
+    return _storage[index];
+  }
+
+  const Element& operator[](const std::size_t index) const
+  {
+    return _storage[index];
+  }
+
+  Element& at(const std::size_t index)
+  {
+    return _storage.at(index);
+  }
+
+  const Element& at(const std::size_t index) const
+  {
+    return _storage.at(index);
+  }
+
+  std::size_t size() const
+  {
+    return _storage.size();
+  }
+
+  bool empty() const
+  {
+    return _storage.empty();
+  }
+
+private:
+  Storage _storage;
+};
+
+using OrderMap = TemplateOrderMap<Time, WaypointList::iterator>;
+
+//==============================================================================
+struct WaypointElement
 {
   struct Data
   {
-    Time finish_time;
-    Trajectory::ConstProfilePtr profile;
+    Time time;
     Eigen::Vector3d position;
     Eigen::Vector3d velocity;
   };
 
   Data data;
 
-  // We store a Trajectory::Segment in this struct so that we can always safely
-  // return a reference to a Trajectory::Segment object. As long as this
-  // SegmentData is alive, any Trajectory::Segment reference that refers to it
+  // We store a Trajectory::Waypoint in this struct so that we can always safely
+  // return a reference to a Trajectory::Waypoint object. As long as this
+  // WaypointData is alive, any Trajectory::Waypoint reference that refers to it
   // will remain valid.
-  std::unique_ptr<Trajectory::Segment> myself;
+  std::unique_ptr<Trajectory::Waypoint> myself;
 
-  SegmentElement(Data input_data)
-    : data(std::move(input_data))
+  WaypointElement(Data input_data)
+  : data(std::move(input_data))
   {
     // Do nothing
   }
 
-  SegmentElement(const SegmentElement& other)
-    : data(other.data)
+  WaypointElement(const WaypointElement& other)
+  : data(other.data)
   {
     // Do nothing
   }
 
-  SegmentElement& operator=(const SegmentElement& other)
+  WaypointElement& operator=(const WaypointElement& other)
   {
     data = other.data;
     return *this;
   }
 
-  SegmentElement(SegmentElement&&) = default;
-  SegmentElement& operator=(SegmentElement&&) = default;
+  WaypointElement(WaypointElement&&) = default;
+  WaypointElement& operator=(WaypointElement&&) = default;
 };
+
+//==============================================================================
+WaypointList::const_iterator get_raw_iterator(
+  const Trajectory::const_iterator& iterator);
 
 } // namespace internal
 } // namespace rmf_traffic

@@ -11,6 +11,10 @@ to many other subsystems, as shown in the following diagram.
 
 ![integration-diagram](/docs/rmf_core_integration_diagram.png)
 
+## FAQ
+
+Answers to frequently asked questions can be found [here](docs/faq.md).
+
 ## Interfacing with rmf\_core
 
 There are several interface points with RMF core, as shown in the arrows
@@ -55,8 +59,6 @@ allow many other potential options for de-conflicting robot traffic.
 | pause/resume motion | `rmf_fleet_msgs/ModeRequest` | `mode_requests` |
 | set complete paths | `rmf_fleet_msgs/PathRequest` | `path_requests` |
 
-* [Example](docs/fake_fleet_adapter.md) - running a simulated read-only fleet
-
 ### Door integration
 
 The `rmf_door_msgs` package contains two messages. This interface allows
@@ -66,3 +68,29 @@ facility.
 to `rmf_core`. These messages express the current mode of the door as `CLOSED`, `MOVING`, or `OPEN`
  * `rmf_door_msgs/DoorRequest` messages are sent from `rmf_core` to doors when
 they need to open or close for robot operations.
+
+## Installation
+Building `rmf_core` from source requires `gcc version 8` or `clang version 6` (or above)
+```
+mkdir ws_rmf/src -p
+cd ws_rmf/src/
+git clone https://github.com/osrf/rmf_core.git
+cd ../
+source /opt/ros/eloquent/setup.bash
+rosdep update
+rosdep install --from-paths src --ignore-src -yr
+colcon build --cmake-args -DCMAKE_BUILD_TYPE=RELEASE
+```
+
+To manually override the compiler version, prefix the `colcon` command with the `CXX` parameter.
+```
+sudo apt update && sudo apt install g++-8
+CXX=g++-8 colcon build --cmake-args -DCMAKE_BUILD_TYPE=RELEASE
+```
+
+## Demonstrations
+
+[This repository](https://github.com/osrf/rmf_demos) holds a number of demonstrations and examples of working with `rmf_core` and the other packages in the RMF ecosystem.
+
+## Contributing
+Guidelines on contributing to `rmf_core` and other RMF repositories can be found [here](docs/contributing.md).

@@ -15,111 +15,123 @@
  *
 */
 
-#ifndef SRC__RMF_TRAFFIC__AGV__PLANNINGINTERNAL_HPP
-#define SRC__RMF_TRAFFIC__AGV__PLANNINGINTERNAL_HPP
+#ifndef SRC__RMF_TRAFFIC__AGV__INTERNAL_PLANNING_HPP
+#define SRC__RMF_TRAFFIC__AGV__INTERNAL_PLANNING_HPP
 
 #include <rmf_traffic/agv/Planner.hpp>
+#include <rmf_traffic/agv/debug/Planner.hpp>
 
 #include <memory>
 #include <mutex>
 
 namespace rmf_traffic {
-namespace internal {
+namespace agv {
 namespace planning {
 
-class Cache;
-using CachePtr = std::shared_ptr<Cache>;
-
 //==============================================================================
-struct Result
+struct Conditions
 {
-  std::vector<Trajectory> trajectories;
-  std::vector<agv::Plan::Waypoint> waypoints;
-
-  agv::Planner::Start start;
+  std::vector<agv::Planner::Start> starts;
   agv::Planner::Goal goal;
   agv::Planner::Options options;
 };
 
 //==============================================================================
-class Cache
+struct Issues
 {
-public:
+  using BlockedNodes = std::unordered_map<std::shared_ptr<void>, Time>;
+  using BlockerMap = std::unordered_map<schedule::ParticipantId, BlockedNodes>;
 
-  // TODO(MXG): Consider using libguarded instead of using mutexes manually
-  std::mutex mutex;
-
-  // We need to explicitly define these because the std::mutex does not have
-  // a copy constructor
-  Cache() = default;
-  Cache(const Cache&);
-  Cache(Cache&&);
-  Cache& operator=(const Cache&);
-  Cache& operator=(Cache&&);
-
-  virtual CachePtr clone() const = 0;
-
-  virtual void update(const Cache& other) = 0;
-
-  virtual rmf_utils::optional<Result> plan(
-      const std::vector<agv::Planner::Start>& starts,
-      agv::Planner::Goal goal,
-      agv::Planner::Options options) = 0;
-
-  virtual const agv::Planner::Configuration& get_configuration() const =0;
-
-  virtual ~Cache() = default;
+  BlockerMap blocked_nodes;
+  bool interrupted = false;
+  bool disconnected = false;
 };
 
 //==============================================================================
-class CacheHandle
+struct State
 {
-public:
+  Conditions conditions;
+  Issues issues;
+  std::optional<double> ideal_cost;
 
-  CacheHandle(CachePtr original);
+  class Internal
+  {
+  public:
 
-  // Copying this class does not make sense
-  CacheHandle(const CacheHandle&) = delete;
+    virtual std::optional<double> cost_estimate() const = 0;
 
-  // Moving it is okay
-  CacheHandle(CacheHandle&&) = default;
+    virtual std::size_t queue_size() const = 0;
 
-  rmf_utils::optional<Result> plan(
-      const std::vector<agv::Planner::Start>& starts,
-      agv::Planner::Goal goal,
-      agv::Planner::Options options);
+    virtual ~Internal() = default;
+  };
 
-  ~CacheHandle();
-
-private:
-
-  CachePtr _copy;
-
-  CachePtr _original;
-
+  rmf_utils::impl_ptr<Internal> internal;
+  std::size_t popped_count = 0;
 };
 
 //==============================================================================
-class CacheManager
+struct PlanData
 {
-public:
-
-  CacheManager(CachePtr cache);
-
-  CacheHandle get() const;
-
-  const agv::Planner::Configuration& get_configuration() const;
-
-private:
-  CachePtr _cache;
-
+  std::vector<Route> routes;
+  std::vector<agv::Plan::Waypoint> waypoints;
+  agv::Planner::Start start;
+  double cost;
 };
 
 //==============================================================================
-CacheManager make_cache(agv::Planner::Configuration config);
+class Interface
+{
+public:
+
+  virtual State initiate(
+    const std::vector<agv::Planner::Start>& starts,
+    agv::Planner::Goal goal,
+    agv::Planner::Options options) const = 0;
+
+  virtual std::optional<PlanData> plan(State& state) const = 0;
+
+  virtual std::vector<schedule::Itinerary> rollout(
+    const Duration span,
+    const Issues::BlockedNodes& nodes,
+    const Planner::Goal& goal,
+    const Planner::Options& options,
+    std::optional<std::size_t> max_rollouts) const = 0;
+
+  virtual const Planner::Configuration& get_configuration() const = 0;
+
+  class Debugger
+  {
+  public:
+
+    virtual const Planner::Debug::Node::SearchQueue& queue() const = 0;
+
+    virtual const std::vector<Planner::Debug::ConstNodePtr>&
+    expanded_nodes() const = 0;
+
+    virtual const std::vector<Planner::Debug::ConstNodePtr>&
+    terminal_nodes() const = 0;
+
+    virtual ~Debugger() = default;
+  };
+
+  virtual std::unique_ptr<Debugger> debug_begin(
+    const std::vector<Planner::Start>& starts,
+    Planner::Goal goal,
+    Planner::Options options) const = 0;
+
+  virtual std::optional<PlanData> debug_step(Debugger& debugger) const = 0;
+
+  virtual ~Interface() = default;
+};
+
+//==============================================================================
+using InterfacePtr = std::shared_ptr<const Interface>;
+
+//==============================================================================
+InterfacePtr make_planner_interface(Planner::Configuration config);
 
 } // namespace planning
-} // namespace internal
+} // namespace agv
 } // namespace rmf_traffic
 
-#endif // SRC__RMF_TRAFFIC__AGV__PLANNINGINTERNAL_HPP
+#endif // SRC__RMF_TRAFFIC__AGV__INTERNAL_PLANNING_HPP

@@ -21,14 +21,22 @@
 #include <rmf_traffic/geometry/Shape.hpp>
 #include <rmf_traffic/geometry/ConvexShape.hpp>
 
+#ifdef RMF_TRAFFIC__USING_FCL_0_6
+#include <fcl/narrowphase/collision_object.h>
+#else
 #include <fcl/collision_object.h>
+#endif
 
 #include <vector>
 
 namespace rmf_traffic {
 namespace geometry {
 
+#ifdef RMF_TRAFFIC__USING_FCL_0_6
+using CollisionGeometryPtr = std::shared_ptr<fcl::CollisionGeometryd>;
+#else
 using CollisionGeometryPtr = std::shared_ptr<fcl::CollisionGeometry>;
+#endif
 using CollisionGeometries = std::vector<CollisionGeometryPtr>;
 
 //==============================================================================
@@ -39,6 +47,8 @@ class Shape::Internal
 public:
 
   virtual CollisionGeometries make_fcl() const = 0;
+
+  virtual ~Internal() = default;
 
 };
 
@@ -51,18 +61,23 @@ public:
 
   CollisionGeometries _collisions;
 
+  double _characteristic_length;
+
   static const CollisionGeometries& get_collisions(const FinalShape& shape)
   {
     return shape._pimpl->_collisions;
   }
 
   static FinalShape make_final_shape(
-      rmf_utils::impl_ptr<const Shape> shape,
-      CollisionGeometries collisions)
+    rmf_utils::impl_ptr<const Shape> shape,
+    CollisionGeometries collisions,
+    double characteristic_length)
   {
     FinalShape result;
     result._pimpl = rmf_utils::make_impl<Implementation>(
-          Implementation{std::move(shape), std::move(collisions)});
+      Implementation{std::move(shape),
+        std::move(collisions),
+        std::move(characteristic_length)});
     return result;
   }
 
@@ -79,12 +94,15 @@ public:
   }
 
   static FinalConvexShape make_final_shape(
-      rmf_utils::impl_ptr<const Shape> shape,
-      CollisionGeometries collisions)
+    rmf_utils::impl_ptr<const Shape> shape,
+    CollisionGeometries collisions,
+    double characteristic_length)
   {
     FinalConvexShape result;
     result._pimpl = rmf_utils::make_impl<FinalShape::Implementation>(
-          FinalShape::Implementation{std::move(shape), std::move(collisions)});
+      FinalShape::Implementation{std::move(shape),
+        std::move(collisions),
+        characteristic_length});
     return result;
   }
 };

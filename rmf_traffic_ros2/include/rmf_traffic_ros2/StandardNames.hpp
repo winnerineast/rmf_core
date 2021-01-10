@@ -23,16 +23,49 @@
 namespace rmf_traffic_ros2 {
 
 const std::string Prefix = "rmf_traffic/";
-const std::string SubmitTrajectoriesSrvName = Prefix + "submit_trajectories";
-const std::string ReplaceTrajectoriesSrvName = Prefix + "replace_trajectories";
-const std::string DelayTrajectoriesSrvName = Prefix + "delay_trajectories";
-const std::string EraseTrajectoriesSrvName = Prefix + "erase_trajectories";
-const std::string ResolveConflictsSrvName = Prefix + "resolve_conflicts";
+const std::string ItinerarySetTopicName = Prefix + "itinerary_set";
+const std::string ItineraryExtendTopicName = Prefix + "itinerary_extend";
+const std::string ItineraryDelayTopicName = Prefix + "itinerary_delay";
+const std::string ItineraryEraseTopicName = Prefix + "itinerary_erase";
+const std::string ItineraryClearTopicName = Prefix + "itinerary_clear";
+const std::string RegisterParticipantSrvName = Prefix + "register_participant";
+const std::string UnregisterParticipantSrvName = Prefix +
+  "unregister_participant";
 const std::string RegisterQueryServiceName = Prefix + "register_query";
 const std::string UnregisterQueryServiceName = Prefix + "unregister_query";
 const std::string MirrorUpdateServiceName = Prefix + "mirror_update";
 const std::string MirrorWakeupTopicName = Prefix + "mirror_wakeup";
-const std::string ScheduleConflictTopicName = Prefix + "schedule_conflict";
+const std::string ScheduleInconsistencyTopicName = Prefix +
+  "schedule_inconsistency";
+const std::string NegotiationAckTopicName = Prefix +
+  "negotiation_ack";
+const std::string NegotiationRepeatTopicName = Prefix +
+  "negotiation_repeat";
+const std::string NegotiationNoticeTopicName = Prefix +
+  "negotiation_notice";
+const std::string NegotiationRefusalTopicName = Prefix +
+  "negotiation_refusal";
+const std::string NegotiationProposalTopicName = Prefix +
+  "negotiation_proposal";
+const std::string NegotiationRejectionTopicName = Prefix +
+  "negotiation_rejection";
+const std::string NegotiationForfeitTopicName = Prefix +
+  "negotiation_forfeit";
+const std::string NegotiationConclusionTopicName = Prefix +
+  "negotiation_conclusion";
+
+const std::string BlockadeCancelTopicName = Prefix +
+  "blockade_cancel";
+const std::string BlockadeHeartbeatTopicName = Prefix +
+  "blockade_heartbeat";
+const std::string BlockadeReachedTopicName = Prefix +
+  "blockade_reached";
+const std::string BlockadeReadyTopicName = Prefix +
+  "blockade_ready";
+const std::string BlockadeReleaseTopicName = Prefix +
+  "blockade_release";
+const std::string BlockadeSetTopicName = Prefix +
+  "blockade_set";
 
 const std::string EmergencyTopicName = "fire_alarm_trigger";
 

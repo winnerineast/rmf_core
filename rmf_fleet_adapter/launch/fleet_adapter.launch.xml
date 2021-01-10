@@ -14,14 +14,20 @@
   <arg name="angular_velocity" description="The nominal angular velocity of the vehicles in this fleet"/>
   <arg name="linear_acceleration" description="The nominal linear acceleration of the vehicles in this fleet"/>
   <arg name="angular_acceleration" description="The nominal angular acceleration of the vehicles in this fleet"/>
-  <arg name="profile_radius" description="The radius of the bounding circle of the vehicles in this fleet"/>
+  <arg name="footprint_radius" description="The radius of the footprint of the vehicles in this fleet"/>
+  <arg name="vicinity_radius" description="The radius of the personal vicinity of the vehicles in this fleet"/>
   <arg name="perform_deliveries" default="false" description="Whether this fleet adapter can perform deliveries"/>
+  <arg name="delay_threshold" default="10.0" description="How long to wait before replanning" />
+  <arg name="disable_delay_threshold" default="false" description="Disable the delay_threshold behavior" />
+  <arg name="retry_wait" default="10.0" description="How long a retry should wait before starting"/>
+  <arg name="discovery_timeout" default="10.0" description="How long to wait on discovery before giving up"/>
+  <arg name="reversible" default="true" description="Can the robot drive backwards"/>
+  <arg name="transport_sleep" default="0.0" description="Use this value to limit the CPU usage."/>
   <arg name="output" default="screen"/>
 
   <node pkg="rmf_fleet_adapter"
         exec="$(var control_type)"
         name="$(var fleet_name)_fleet_adapter"
-        node-name="$(var fleet_name)_fleet_adapter"
         output="both">
 
     <param name="fleet_name" value="$(var fleet_name)"/>
@@ -34,11 +40,19 @@
     <param name="linear_acceleration" value="$(var linear_acceleration)"/>
     <param name="angular_acceleration" value="$(var angular_acceleration)"/>
 
-    <param name="profile_radius" value="$(var profile_radius)"/>
+    <param name="footprint_radius" value="$(var footprint_radius)"/>
+    <param name="vicinity_radius" value="$(var vicinity_radius)"/>
 
     <param name="perform_deliveries" value="$(var perform_deliveries)"/>
 
+    <param name="delay_threshold" value="$(var delay_threshold)"/>
+    <param name="disable_delay_threshold" value="$(var disable_delay_threshold)"/>
+    <param name="retry_wait" value="$(var retry_wait)"/>
+    <param name="discovery_timeout" value="$(var discovery_timeout)"/>
+    <param name="reversible" value="$(var reversible)"/>
+
     <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="transport_sleep" value="$(var transport_sleep)"/>
   </node>
 
 </launch>

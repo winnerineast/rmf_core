@@ -22,12 +22,23 @@
 
 #include <rmf_traffic/Trajectory.hpp>
 
+#ifdef RMF_TRAFFIC__USING_FCL_0_6
+#include <fcl/math/motion/spline_motion.h>
+#else
 #include <fcl/ccd/motion.h>
+#endif
 
 #include <array>
 
 namespace rmf_traffic {
 
+#ifdef RMF_TRAFFIC__USING_FCL_0_6
+  using FclSplineMotion = fcl::SplineMotion<double>;
+#else
+  using FclSplineMotion = fcl::SplineMotion;
+#endif
+
+//==============================================================================
 /// A utility class to convert Trajectories into piecewise-splines.
 ///
 /// \warning For now this class is only meant for internal use; it is not part
@@ -36,21 +47,20 @@ namespace rmf_traffic {
 class Spline
 {
 public:
-
-  /// Create a spline that goes from the end of the preceding to the Segment of
+  /// Create a spline that goes from the end of the preceding to the Waypoint of
   /// `it`.
   Spline(const Trajectory::const_iterator& it);
 
-  /// Create a spline that goes from the end of the preceding to the Segment of
+  /// Create a spline that goes from the end of the preceding to the Waypoint of
   /// `it`.
-  Spline(const internal::SegmentList::const_iterator& it);
+  Spline(const internal::WaypointList::const_iterator& it);
 
   /// Compute the knots for the motion of this spline from start_time to
   /// finish_time, scaled to a "time" range of [0, 1].
   std::array<Eigen::Vector3d, 4> compute_knots(
-      const Time start_time, const Time finish_time) const;
+    const Time start_time, const Time finish_time) const;
 
-  fcl::SplineMotion to_fcl(const Time start_time, const Time finish_time) const;
+  FclSplineMotion to_fcl(const Time start_time, const Time finish_time) const;
 
   Time start_time() const;
   Time finish_time() const;
@@ -71,9 +81,38 @@ public:
   /// Compute the velocity of the spline at this moment in time
   Eigen::Vector3d compute_acceleration(const Time at_time) const;
 
+  /// Get a const reference to the parameters of this spline
+  const Parameters& get_params() const;
+
 private:
 
   Parameters params;
+
+};
+
+//==============================================================================
+/// This class helps compute the differentials of the distance between two
+/// splines.
+class DistanceDifferential
+{
+public:
+
+  DistanceDifferential(
+      const Spline& spline_a,
+      const Spline& spline_b);
+
+  bool initially_approaching() const;
+
+  /// Calculate the times within the relevant window when an "approach" is
+  /// occuring. This means that the vehicles are getting closer together than
+  /// they should.
+  std::vector<Time> approach_times() const;
+
+  Time start_time() const;
+  Time finish_time() const;
+
+private:
+  Spline::Parameters _params;
 
 };
 

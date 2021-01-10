@@ -20,6 +20,7 @@
 
 #include <rmf_door_msgs/msg/door_state.hpp>
 #include <rmf_door_msgs/msg/door_request.hpp>
+#include <rmf_door_msgs/msg/supervisor_heartbeat.hpp>
 
 #include <string>
 #include <unordered_map>
@@ -47,16 +48,16 @@ private:
   void _adapter_door_request_update(DoorRequest::UniquePtr msg);
 
   void _process_open_request(
-      const std::string& door_name,
-      const std::string& requester_id,
-      const builtin_interfaces::msg::Time& time);
+    const std::string& door_name,
+    const std::string& requester_id,
+    const builtin_interfaces::msg::Time& time);
 
   void _send_open_request(const std::string& door_name);
 
   void _process_close_request(
-      const std::string& door_name,
-      const std::string& requester_id,
-      const builtin_interfaces::msg::Time& time);
+    const std::string& door_name,
+    const std::string& requester_id,
+    const builtin_interfaces::msg::Time& time);
 
   void _send_close_request(const std::string& door_name);
 
@@ -65,10 +66,15 @@ private:
   DoorStateSub::SharedPtr _door_state_sub;
   void _door_state_update(DoorState::UniquePtr msg);
 
+  using Heartbeat = rmf_door_msgs::msg::SupervisorHeartbeat;
+  using HeartbeatPub = rclcpp::Publisher<Heartbeat>;
+  HeartbeatPub::SharedPtr _door_heartbeat_pub;
+  void _publish_heartbeat();
+
   using OpenRequestLog =
-      std::unordered_map<
-        std::string,
-        std::unordered_map<std::string, rclcpp::Time>>;
+    std::unordered_map<
+    std::string,
+    std::unordered_map<std::string, rclcpp::Time>>;
   OpenRequestLog _log;
 };
 

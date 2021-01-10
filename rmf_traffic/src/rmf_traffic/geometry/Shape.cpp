@@ -36,7 +36,7 @@ const Shape::Internal* Shape::_get_internal() const
 
 //==============================================================================
 Shape::Shape(std::unique_ptr<Internal> internal)
-  : _internal(std::move(internal))
+: _internal(std::move(internal))
 {
   // Do nothing
 }
@@ -51,6 +51,12 @@ Shape::~Shape()
 const Shape& FinalShape::source() const
 {
   return *_pimpl->_shape;
+}
+
+//==============================================================================
+double FinalShape::get_characteristic_length() const
+{
+  return _pimpl->_characteristic_length;
 }
 
 //==============================================================================

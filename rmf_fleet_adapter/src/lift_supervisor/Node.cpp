@@ -30,37 +30,69 @@ Node::Node()
   const auto default_qos = rclcpp::SystemDefaultsQoS();
 
   _lift_request_pub = create_publisher<LiftRequest>(
-        FinalLiftRequestTopicName, default_qos);
+    FinalLiftRequestTopicName, default_qos);
 
   _adapter_lift_request_sub = create_subscription<LiftRequest>(
-        AdapterLiftRequestTopicName, default_qos,
-        [&](LiftRequest::UniquePtr msg)
-  {
-    _adapter_lift_request_update(std::move(msg));
-  });
+    AdapterLiftRequestTopicName, default_qos,
+    [&](LiftRequest::UniquePtr msg)
+    {
+      _adapter_lift_request_update(std::move(msg));
+    });
 
   _lift_state_sub = create_subscription<LiftState>(
-        LiftStateTopicName, default_qos,
-        [&](LiftState::UniquePtr msg)
-  {
-    _lift_state_update(std::move(msg));
-  });
+    LiftStateTopicName, default_qos,
+    [&](LiftState::UniquePtr msg)
+    {
+      _lift_state_update(std::move(msg));
+    });
 
   _emergency_notice_pub = create_publisher<EmergencyNotice>(
-        rmf_traffic_ros2::EmergencyTopicName, default_qos);
+    rmf_traffic_ros2::EmergencyTopicName, default_qos);
 }
 
 //==============================================================================
 void Node::_adapter_lift_request_update(LiftRequest::UniquePtr msg)
 {
-  // For now we will simply forward the request along
+  auto& curr_request = _active_sessions.insert(
+    std::make_pair(msg->lift_name, nullptr)).first->second;
+
+  if (curr_request)
+  {
+    if (curr_request->session_id == msg->session_id)
+    {
+      if (msg->request_type != LiftRequest::REQUEST_END_SESSION)
+        curr_request = std::move(msg);
+      else
+      {
+        _lift_request_pub->publish(*msg);
+        curr_request = nullptr;
+      }
+    }
+  }
+  else
+  {
+    if (msg->request_type != LiftRequest::REQUEST_END_SESSION)
+    {
+      curr_request = std::move(msg);
+    }
+  }
+
   // TODO(MXG): Make this more intelligent by scheduling the lift
-  _lift_request_pub->publish(*msg);
 }
 
 //==============================================================================
-void Node::_lift_state_update(LiftState::UniquePtr /*msg*/)
+void Node::_lift_state_update(LiftState::UniquePtr msg)
 {
+  auto& lift_request = _active_sessions.insert(
+    std::make_pair(msg->lift_name, nullptr)).first->second;
+
+  if (lift_request)
+  {
+    if ((lift_request->destination_floor != msg->current_floor) ||
+        (lift_request->door_state != msg->door_state))
+      _lift_request_pub->publish(*lift_request);
+  }
+
   // For now, we do not need to publish this.
 
 //  std_msgs::msg::Bool emergency_msg;
