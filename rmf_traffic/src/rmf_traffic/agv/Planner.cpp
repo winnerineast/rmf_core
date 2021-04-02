@@ -16,7 +16,7 @@
 */
 
 #include <rmf_traffic/agv/Planner.hpp>
-#include <rmf_traffic/agv/debug/Planner.hpp>
+#include <rmf_traffic/agv/debug/debug_Planner.hpp>
 
 #include "internal_Planner.hpp"
 #include "internal_planning.hpp"
@@ -365,8 +365,8 @@ class Planner::Goal::Implementation
 public:
 
   std::size_t waypoint;
-
-  rmf_utils::optional<double> orientation;
+  std::optional<double> orientation;
+  std::optional<rmf_traffic::Time> minimum_time;
 
 };
 
@@ -375,7 +375,8 @@ Planner::Goal::Goal(const std::size_t waypoint)
 : _pimpl(rmf_utils::make_impl<Implementation>(
       Implementation{
         waypoint,
-        rmf_utils::nullopt
+        std::nullopt,
+        std::nullopt
       }))
 {
   // Do nothing
@@ -386,10 +387,26 @@ Planner::Goal::Goal(
   const std::size_t waypoint,
   const double goal_orientation)
 : _pimpl(rmf_utils::make_impl<Implementation>(
-      Implementation{
-        waypoint,
-        goal_orientation
-      }))
+    Implementation{
+      waypoint,
+      goal_orientation,
+      std::nullopt
+    }))
+{
+  // Do nothing
+}
+
+//==============================================================================
+Planner::Goal::Goal(
+  const std::size_t goal_waypoint,
+  const std::optional<rmf_traffic::Time> minimum_time,
+  const std::optional<double> goal_orientation)
+: _pimpl(rmf_utils::make_impl<Implementation>(
+    Implementation{
+      goal_waypoint,
+      goal_orientation,
+      minimum_time
+    }))
 {
   // Do nothing
 }
@@ -428,6 +445,20 @@ const double* Planner::Goal::orientation() const
     return &(*_pimpl->orientation);
 
   return nullptr;
+}
+
+//==============================================================================
+auto Planner::Goal::minimum_time(std::optional<rmf_traffic::Time> value)
+-> Goal&
+{
+  _pimpl->minimum_time = value;
+  return *this;
+}
+
+//==============================================================================
+std::optional<rmf_traffic::Time> Planner::Goal::minimum_time() const
+{
+  return _pimpl->minimum_time;
 }
 
 //==============================================================================
@@ -1168,6 +1199,26 @@ auto Planner::Debug::begin(
     starts,
     std::move(goal),
     std::move(options));
+}
+
+//==============================================================================
+std::size_t Planner::Debug::queue_size(const Planner::Result& result)
+{
+  return Planner::Result::Implementation::get(result)
+      .state.internal->queue_size();
+}
+
+//==============================================================================
+std::size_t Planner::Debug::expansion_count(const Planner::Result& result)
+{
+  return Planner::Result::Implementation::get(result)
+      .state.internal->expansion_count();
+}
+
+//==============================================================================
+std::size_t Planner::Debug::node_count(const Planner::Result& result)
+{
+  return queue_size(result) + expansion_count(result);
 }
 
 } // namespace agv

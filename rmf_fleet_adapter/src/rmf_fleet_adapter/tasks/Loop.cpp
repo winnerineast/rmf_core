@@ -24,45 +24,50 @@ namespace tasks {
 
 //==============================================================================
 std::shared_ptr<Task> make_loop(
-    const rmf_task_msgs::msg::Loop& request,
+    const rmf_task::ConstRequestPtr request,
     const agv::RobotContextPtr& context,
-    rmf_utils::optional<rmf_traffic::agv::Plan::Start> init_start,
-    rmf_traffic::agv::Plan::Start loop_start,
-    rmf_utils::optional<rmf_traffic::agv::Plan::Start> loop_end)
+    const rmf_traffic::agv::Plan::Start start,
+    const rmf_traffic::Time deployment_time,
+    const rmf_task::agv::State finish_state)
 {
-  const auto& graph = context->navigation_graph();
+  std::shared_ptr<const rmf_task::requests::LoopDescription> description =
+    std::dynamic_pointer_cast<
+      const rmf_task::requests::LoopDescription>(request->description());
+
+  if (description == nullptr)
+    return nullptr;
 
   Task::PendingPhases phases;
-
-  const auto start_wp =
-      graph.find_waypoint(request.start_name)->index();
-
-  const auto end_wp =
-      graph.find_waypoint(request.finish_name)->index();
-
-  if (init_start)
-  {
-    phases.push_back(
-          phases::GoToPlace::make(context, *init_start, start_wp));
-  }
-
+  const auto loop_start = description->loop_start(start);
+  const auto loop_end = description->loop_end(loop_start);
 
   phases.push_back(
-        phases::GoToPlace::make(context, loop_start, end_wp));
+    phases::GoToPlace::make(
+      context, std::move(start), description->start_waypoint()));
 
-  for (std::size_t i=1; i < request.num_loops; ++i)
+  phases.push_back(
+    phases::GoToPlace::make(
+      context, loop_start, description->finish_waypoint()));
+
+  for (std::size_t i = 1; i < description->num_loops(); ++i)
   {
-    assert(loop_end);
+    phases.push_back(
+      phases::GoToPlace::make(
+        context, loop_end, description->start_waypoint()));
 
     phases.push_back(
-          phases::GoToPlace::make(context, *loop_end, start_wp));
-
-    phases.push_back(
-          phases::GoToPlace::make(context, loop_start, end_wp));
+      phases::GoToPlace::make(
+        context, loop_start, description->finish_waypoint()));
   }
 
-  return Task::make(request.task_id, std::move(phases), context->worker());
+  return Task::make(
+    request->id(),
+    std::move(phases),
+    context->worker(),
+    deployment_time,
+    finish_state,
+    request);
 }
 
 } // namespace tasks
-} // naemspace rmf_fleet_adapter
+} // namespace rmf_fleet_adapter

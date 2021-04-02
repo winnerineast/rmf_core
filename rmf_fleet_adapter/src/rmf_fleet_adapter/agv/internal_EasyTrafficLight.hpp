@@ -81,12 +81,14 @@ public:
     rclcpp::Time time;
     StoppedAt stopped_at;
     Departed departed;
+    std::size_t path_version;
   };
 
   struct ResumeInfo
   {
     std::size_t checkpoint;
     Departed departed;
+    std::size_t path_version;
   };
 
   void receive_checkpoints(
@@ -107,6 +109,8 @@ public:
   void deadlock(std::vector<Blocker> blockers);
 
   void follow_new_path(const std::vector<Waypoint>& new_path);
+
+  void clear();
 
   void accept_new_checkpoints();
 
